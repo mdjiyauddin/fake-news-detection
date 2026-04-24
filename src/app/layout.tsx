@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Exo_2, Orbitron } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const orbitron = Orbitron({
   variable: "--font-orbitron",
@@ -30,7 +31,9 @@ export default function RootLayout({
       lang="en"
       className={`${orbitron.variable} ${exo.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-sans">{children}</body>
+      <body className="min-h-full font-sans">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

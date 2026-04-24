@@ -2,13 +2,59 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import type { NewsArticle } from "@/lib/types";
+import { detectNews } from "@/lib/detectNews";
 
 type Props = {
   article: NewsArticle | null;
   onClose: () => void;
 };
 
+function Meter({
+  label,
+  value,
+  gradient,
+}: {
+  label: string;
+  value: number;
+  gradient: string;
+}) {
+  return (
+    <div>
+      <div className="flex justify-between text-xs text-[#EAEAEA]/65">
+        <span>{label}</span>
+        <span className="font-semibold text-[#EAEAEA]">{value}%</span>
+      </div>
+      <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.min(100, value)}%` }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          className={`h-full rounded-full ${gradient}`}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function NewsModal({ article, onClose }: Props) {
+  const detection = article
+    ? detectNews({
+        title: article.title,
+        description: article.description || undefined,
+        content: article.content || undefined,
+        source_id: article.source_id || undefined,
+        pubDate: article.pubDate || undefined,
+        link: article.link || undefined,
+      })
+    : null;
+
+  const verdictColor =
+    detection?.verdict === "REAL"
+      ? "text-emerald-300"
+      : detection?.verdict === "FAKE"
+        ? "text-fuchsia-300"
+        : "text-amber-300";
+
   return (
     <AnimatePresence>
       {article && (
@@ -45,6 +91,70 @@ export function NewsModal({ article, onClose }: Props) {
                 {article.title}
               </h2>
               <p className="mt-2 text-sm text-cyan-300/80">{article.pubDate}</p>
+
+              {detection && (
+                <div className="mt-6 rounded-2xl border border-white/10 bg-black/35 p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <p
+                        className={`font-[family-name:var(--font-orbitron)] text-lg font-black ${verdictColor}`}
+                      >
+                        {detection.verdict}
+                      </p>
+                      <span className="text-xs text-[#EAEAEA]/50">
+                        Confidence:{" "}
+                        <span className="font-semibold text-cyan-200">
+                          {detection.confidenceScore}%
+                        </span>
+                      </span>
+                    </div>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-[#EAEAEA]/60">
+                      Smart scan
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <Meter
+                      label="Credibility"
+                      value={detection.breakdown.credibility}
+                      gradient="bg-gradient-to-r from-emerald-500 to-cyan-500"
+                    />
+                    <Meter
+                      label="Sensationalism"
+                      value={detection.breakdown.sensationalism}
+                      gradient="bg-gradient-to-r from-fuchsia-500 to-violet-600"
+                    />
+                    <Meter
+                      label="Emotional manipulation"
+                      value={detection.breakdown.emotional}
+                      gradient="bg-gradient-to-r from-amber-500 to-rose-500"
+                    />
+                    <Meter
+                      label="Consistency"
+                      value={detection.breakdown.consistency}
+                      gradient="bg-gradient-to-r from-cyan-500 to-blue-500"
+                    />
+                  </div>
+
+                  <p className="mt-4 text-sm leading-relaxed text-[#EAEAEA]/75">
+                    {detection.explanation}
+                  </p>
+
+                  {detection.flags.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {detection.flags.slice(0, 8).map((f) => (
+                        <span
+                          key={f}
+                          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-[#EAEAEA]/70"
+                        >
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <p className="mt-6 whitespace-pre-wrap text-[#EAEAEA]/80">
                 {article.description ||
                   article.content ||

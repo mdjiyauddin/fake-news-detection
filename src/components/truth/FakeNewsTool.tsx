@@ -6,13 +6,16 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 
 type Result = {
-  fakeProbability: number;
-  authenticityScore: number;
-  hateSpeechPercent: number;
-  manipulationPercent: number;
-  label: string;
+  verdict: "REAL" | "MISLEADING" | "FAKE" | "ERROR";
+  confidenceScore: number;
+  breakdown?: {
+    credibility: number;
+    sensationalism: number;
+    emotional: number;
+    consistency: number;
+  };
+  flags?: string[];
   explanation: string;
-  note?: string;
 };
 
 function ScoreBar({
@@ -62,11 +65,8 @@ export function FakeNewsTool() {
       setResult(j);
     } catch (e) {
       setResult({
-        fakeProbability: 0,
-        authenticityScore: 0,
-        hateSpeechPercent: 0,
-        manipulationPercent: 0,
-        label: "Error",
+        verdict: "ERROR",
+        confidenceScore: 0,
         explanation: e instanceof Error ? e.message : "Request failed",
       });
     } finally {
@@ -74,8 +74,8 @@ export function FakeNewsTool() {
     }
   };
 
-  const fake = result?.label === "Fake";
-  const real = result?.label === "Real";
+  const fake = result?.verdict === "FAKE";
+  const real = result?.verdict === "REAL";
 
   return (
     <section
@@ -96,8 +96,8 @@ export function FakeNewsTool() {
             Misinformation <span className="tg-gradient-text">radar</span>
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-[#EAEAEA]/60 md:mx-0">
-            Fake vs real risk, manipulation pressure, and hate-speech-style signals
-            (heuristic demo — not a certified classifier).
+            Smart rule-based scoring with explainable signals (demo — not a certified
+            classifier).
           </p>
         </motion.div>
 
@@ -134,7 +134,7 @@ export function FakeNewsTool() {
           <AnimatePresence mode="wait">
             {result && (
               <motion.div
-                key={result.label + result.fakeProbability}
+                key={result.verdict + result.confidenceScore}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
@@ -150,43 +150,43 @@ export function FakeNewsTool() {
                           : "text-amber-300"
                     }`}
                   >
-                    {result.label}
+                    {result.verdict === "ERROR" ? "ERROR" : result.verdict}
                   </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-xl border border-fuchsia-500/25 bg-fuchsia-500/5 p-4">
                     <p className="text-xs uppercase tracking-widest text-fuchsia-300/80">
-                      Fake / misinformation risk
+                      Sensationalism
                     </p>
                     <p className="mt-1 font-[family-name:var(--font-orbitron)] text-3xl font-bold text-fuchsia-200">
-                      {result.fakeProbability}%
+                      {result.breakdown ? result.breakdown.sensationalism : 0}%
                     </p>
                   </div>
                   <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4">
                     <p className="text-xs uppercase tracking-widest text-emerald-300/80">
-                      Real / authentic score
+                      Credibility
                     </p>
                     <p className="mt-1 font-[family-name:var(--font-orbitron)] text-3xl font-bold text-emerald-200">
-                      {result.authenticityScore ?? 100 - result.fakeProbability}%
+                      {result.breakdown ? result.breakdown.credibility : 0}%
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <ScoreBar
-                    label="Hate / abusive language signal"
-                    value={result.hateSpeechPercent ?? 0}
-                    colorClass="bg-gradient-to-r from-rose-500 to-orange-500"
+                    label="Confidence (more likely real)"
+                    value={result.confidenceScore ?? 0}
+                    colorClass="bg-gradient-to-r from-cyan-500 to-emerald-500"
                   />
                   <ScoreBar
-                    label="Manipulation / persuasion pressure"
-                    value={result.manipulationPercent ?? 0}
-                    colorClass="bg-gradient-to-r from-amber-500 to-yellow-400"
+                    label="Emotional manipulation"
+                    value={result.breakdown ? result.breakdown.emotional : 0}
+                    colorClass="bg-gradient-to-r from-amber-500 to-rose-500"
                   />
                   <ScoreBar
-                    label="Misinformation risk (combined)"
-                    value={result.fakeProbability}
+                    label="Consistency"
+                    value={result.breakdown ? result.breakdown.consistency : 0}
                     colorClass="bg-gradient-to-r from-violet-600 to-fuchsia-500"
                   />
                 </div>
@@ -194,8 +194,17 @@ export function FakeNewsTool() {
                 <p className="text-sm leading-relaxed text-[#EAEAEA]/75">
                   {result.explanation}
                 </p>
-                {result.note && (
-                  <p className="text-xs text-[#EAEAEA]/45">{result.note}</p>
+                {result.flags && result.flags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {result.flags.slice(0, 8).map((f) => (
+                      <span
+                        key={f}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-[#EAEAEA]/70"
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </motion.div>
             )}

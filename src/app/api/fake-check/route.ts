@@ -1,30 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeNewsText } from "@/utils/fakeNewsHeuristic";
+import { detectNews } from "@/lib/detectNews";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as { text?: string; url?: string };
-    const text = (body.text || "").trim();
-    const url = body.url?.trim() || null;
+    const body = (await req.json()) as {
+      text?: string;
+      url?: string;
+      title?: string;
+      description?: string;
+      content?: string;
+      source_id?: string;
+      creator?: string[];
+      pubDate?: string;
+      link?: string;
+    };
 
-    if (!text && !url) {
+    const text = (body.text || "").trim();
+    const url = body.url?.trim();
+
+    const title = (body.title || text || "").trim();
+    const link = (body.link || url || "").trim() || undefined;
+    const description = (body.description || "").trim() || undefined;
+    const content = (body.content || "").trim() || undefined;
+
+    if (!title && !description && !content && !link) {
       return NextResponse.json(
-        { error: "Provide news text and/or a URL to analyze." },
+        { error: "Provide title/text and/or article metadata to analyze." },
         { status: 400 }
       );
     }
 
-    const combined =
-      text ||
-      (url
-        ? `Headline or article URL submitted for review: ${url}. No article body was fetched automatically.`
-        : "");
-
-    const result = analyzeNewsText(combined, url);
-    return NextResponse.json({
-      ...result,
-      note: "Heuristic preview — not a courtroom-grade model. Pair with human review and dedicated hate-speech APIs for production.",
+    const result = detectNews({
+      title: title || "Untitled",
+      description,
+      content,
+      source_id: body.source_id || undefined,
+      creator: body.creator,
+      pubDate: body.pubDate || undefined,
+      link,
     });
+
+    return NextResponse.json(result);
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
