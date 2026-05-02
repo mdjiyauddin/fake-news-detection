@@ -5,38 +5,70 @@ import { useRef, useState } from "react";
 
 type Msg = { id: string; role: "user" | "bot"; text: string };
 
-const demoReplies = [
-  "Thanks — this is a demo reply. Wire your n8n webhook here later.",
-  "Interesting point. (Demo) I’ll route this to your automation when connected.",
-  "Got it. For now I’m static — hook up n8n to replace these responses.",
-];
-
 export function DemoChat() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
   const [messages, setMessages] = useState<Msg[]>([
     {
       id: "0",
       role: "bot",
-      text: "Hi — Truth Assistant (demo). Connect n8n to this panel when you’re ready.",
+      text: "Hi! I am connected to the n8n webhook. How can I help you?",
     },
   ]);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const send = () => {
+  const send = async () => {
     const t = input.trim();
-    if (!t) return;
+    if (!t || isLoading) return;
+    
     const uid = `${Date.now()}-u`;
     setMessages((m) => [...m, { id: uid, role: "user", text: t }]);
     setInput("");
-    setTimeout(() => {
-      const reply = demoReplies[Math.floor(Math.random() * demoReplies.length)]!;
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("https://samkhan66.app.n8n.cloud/webhook/fc7034d7-69ae-4975-b9a4-1607c0cbae2a/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ chatInput: t, sessionId }),
+      });
+
+      let replyText = "";
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.output) {
+          replyText = data.output;
+        } else if (typeof data === "string") {
+          replyText = data;
+        } else if (Array.isArray(data) && data[0] && data[0].output) {
+          replyText = data[0].output;
+        } else {
+          replyText = typeof data === "object" ? JSON.stringify(data) : String(data);
+        }
+      } else {
+        replyText = `Error: Server responded with status ${res.status}`;
+      }
+
       setMessages((m) => [
         ...m,
-        { id: `${Date.now()}-b`, role: "bot", text: reply },
+        { id: `${Date.now()}-b`, role: "bot", text: replyText },
       ]);
-      endRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 450);
+    } catch (error) {
+      console.error("Webhook error:", error);
+      setMessages((m) => [
+        ...m,
+        { id: `${Date.now()}-b`, role: "bot", text: "Error: Could not reach the n8n webhook." },
+      ]);
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => {
+        endRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
   };
 
   return (
@@ -55,7 +87,7 @@ export function DemoChat() {
             >
               <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                 <p className="font-[family-name:var(--font-orbitron)] text-xs font-bold uppercase tracking-widest text-cyan-300">
-                  Assistant (demo)
+                  Truth Assistant
                 </p>
                 <button
                   type="button"
@@ -88,16 +120,18 @@ export function DemoChat() {
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && send()}
-                  placeholder="Type a message…"
-                  className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-[#EAEAEA] outline-none placeholder:text-[#EAEAEA]/35 focus:border-cyan-400/40"
+                  onKeyDown={(e) => e.key === "Enter" && !isLoading && send()}
+                  placeholder={isLoading ? "Thinking..." : "Type a message…"}
+                  disabled={isLoading}
+                  className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-[#EAEAEA] outline-none placeholder:text-[#EAEAEA]/35 focus:border-cyan-400/40 disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={send}
-                  className="rounded-xl bg-cyan-500/25 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-400/40"
+                  disabled={isLoading}
+                  className="rounded-xl bg-cyan-500/25 px-4 py-2 text-sm font-semibold text-cyan-100 ring-1 ring-cyan-400/40 disabled:opacity-50"
                 >
-                  Send
+                  {isLoading ? "..." : "Send"}
                 </button>
               </div>
             </motion.div>
