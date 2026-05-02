@@ -1,18 +1,210 @@
 @import "tailwindcss";
 
 :root {
-  --tg-bg: #0a0a0a;
-  --tg-neon: #00f0ff;
-  --tg-purple: #8a2be2;
-  --tg-pink: #ff007f;
-  --tg-text: #eaeaea;
-  --tg-glass: rgba(18, 24, 32, 0.55);
-  --tg-border: rgba(0, 240, 255, 0.22);
+  /* Brand palette (dark, editorial, neon accents) */
+  --tg-bg: #0a0a0f;
+  --tg-surface: #111118;
+  --tg-primary: #6c63ff;
+  --tg-secondary: #00d4aa;
+  --tg-danger: #ff4d6d;
+  --tg-safe: #39d98a;
+  --tg-text: #f0f0f5;
+  --tg-muted: #6b7280;
+  --tg-border: rgba(108, 99, 255, 0.3);
+
+  /* Backwards-compatible aliases used across the UI */
+  --tg-neon: var(--tg-secondary);
+  --tg-purple: var(--tg-primary);
+  --tg-pink: var(--tg-danger);
+  --tg-glass: rgba(17, 17, 24, 0.62);
+
+  /* Font variable aliases for existing components */
+  --font-orbitron: var(--font-heading);
+  --font-exo: var(--font-body);
 }
 
 @theme inline {
-  --font-sans: var(--font-exo);
-  --font-display: var(--font-orbitron);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
+  --color-tg-bg: var(--tg-bg);
+  --color-tg-neon: var(--tg-neon);
+  --color-tg-purple: var(--tg-purple);
+  --color-tg-pink: var(--tg-pink);
+  --color-tg-text: var(--tg-text);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(108, 99, 255, 0.35);
+  color: #fff;
+}
+
+.tg-glass {
+  background: var(--tg-glass);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--tg-border);
+  box-shadow:
+    0 0 0 1px rgba(108, 99, 255, 0.12) inset,
+    0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.tg-glow-border {
+  position: relative;
+}
+
+.tg-glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    var(--tg-secondary),
+    var(--tg-primary),
+    var(--tg-danger),
+    var(--tg-secondary)
+  );
+  background-size: 300% 300%;
+  animation: tg-border-shift 8s ease infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+@keyframes tg-border-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.tg-gradient-text {
+  background: linear-gradient(90deg, var(--tg-secondary), var(--tg-danger), var(--tg-primary));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: tg-shimmer 6s linear infinite;
+}
+
+@keyframes tg-shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.tg-grid-bg {
+  background-image:
+    linear-gradient(rgba(108, 99, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(108, 99, 255, 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes ticker-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.tg-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-marquee 70s linear infinite;
+}
+
+.tg-ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* Fade edges so the seamless loop copy is less visible as a “double” strip */
+.tg-ticker-fade {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+@keyframes sports-score-pulse {
+  0%,
+  100% {
+    text-shadow:
+      0 0 14px rgba(255, 77, 109, 0.45),
+      0 0 28px rgba(108, 99, 255, 0.28);
+  }
+  50% {
+    text-shadow:
+      0 0 18px rgba(255, 77, 109, 0.65),
+      0 0 34px rgba(0, 212, 170, 0.22);
+  }
+}
+
+.tg-sports-score-live {
+  animation: sports-score-pulse 2.8s ease-in-out infinite;
+}
+
+@import "tailwindcss";
+
+:root {
+  /* Brand palette (dark, editorial, neon accents) */
+  --tg-bg: #0a0a0f;
+  --tg-surface: #111118;
+  --tg-primary: #6c63ff;
+  --tg-secondary: #00d4aa;
+  --tg-danger: #ff4d6d;
+  --tg-safe: #39d98a;
+  --tg-text: #f0f0f5;
+  --tg-muted: #6b7280;
+  --tg-border: rgba(108, 99, 255, 0.3);
+
+  /* Backwards-compatible aliases used across the UI */
+  --tg-neon: var(--tg-secondary);
+  --tg-purple: var(--tg-primary);
+  --tg-pink: var(--tg-danger);
+  --tg-glass: rgba(17, 17, 24, 0.62);
+
+  /* Font variable aliases for existing components */
+  --font-orbitron: var(--font-heading);
+  --font-exo: var(--font-body);
+}
+
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
   --color-tg-bg: var(--tg-bg);
   --color-tg-neon: var(--tg-neon);
   --color-tg-purple: var(--tg-purple);

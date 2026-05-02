@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { Exo_2, Orbitron } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers";
 
-const orbitron = Orbitron({
-  variable: "--font-orbitron",
+const heading = Space_Grotesk({
+  variable: "--font-heading",
   subsets: ["latin"],
-  weight: ["400", "600", "700", "900"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const exo = Exo_2({
-  variable: "--font-exo",
+const body = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -29,11 +28,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${orbitron.variable} ${exo.variable} h-full antialiased`}
+      className={`${heading.variable} ${body.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-sans">
-        <Providers>{children}</Providers>
-      </body>
+      <body className="min-h-full font-sans">{children}</body>
     </html>
   );
 }
